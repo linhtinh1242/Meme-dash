@@ -1,0 +1,464 @@
+--[[
+    Project: MEME DASH - @mangnhatoi Premium Hub (Fixed Launch)
+    Platform: Roblox Luau (UNC Compliant)
+    Features: Speed Hack (1-676767), Fly Mode, God Mode, Wall Fling, Virtual Keyboard, Auto Jump, Air Farm, Remove Invisible Walls, Noclip, Anti-AFK.
+]]
+
+repeat task.wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- Cấu hình trạng thái Premium
+getgenv().MemeDashConfig = {
+    SpeedHack = false,
+    WalkSpeed = 16,
+    VirtualPC = false,
+    WallFling = false,
+    AutoJump = false,
+    AutoFarmLevel = false,
+    RemoveWalls = false,
+    Noclip = false,
+    AntiAFK = true,
+    FlyMode = false,
+    FlySpeed = 50,
+    GodMode = false,
+    CustomGravity = 196.2,
+}
+
+local CurrentLang = "VI"
+local AirPosition = nil
+local pcState = { W = false, A = false, S = false, D = false, Space = false }
+
+local Locales = {
+    VI = {
+        Title = "👑 Meme Dash Premium @mangnhatoi",
+        Speed = "Tốc Độ (1 - 676767)", SpeedHack = "Speed Hack",
+        VirtualPC = "Bàn Phím Ảo (WASD + SPACE)", WallFling = "Fling Tường (Wall Fling)",
+        AutoJump = "Nhảy Tự Động", AutoFarm = "Farm Màn [Bay Lên Trời]",
+        RemoveWalls = "Xóa Tường Tàng Hình", Noclip = "Đi Xuyên Tường (Noclip)",
+        AntiAFK = "Chống AFK", FlyMode = "[PREMIUM] Chế Độ Bay",
+        FlySpeed = "[PREMIUM] Tốc Độ Bay (1-300)", GodMode = "[PREMIUM] Bất Tử / Tàng Hình",
+        Gravity = "[PREMIUM] Trọng Lực Tùy Chỉnh",
+    },
+    EN = {
+        Title = "👑 Meme Dash Premium @mangnhatoi",
+        Speed = "Speed (1 - 676767)", SpeedHack = "Speed Hack",
+        VirtualPC = "Virtual Keyboard (WASD + SPACE)", WallFling = "Wall Fling",
+        AutoJump = "Auto Jump", AutoFarm = "Air Farm [Stand Still]",
+        RemoveWalls = "Remove Invisible Walls", Noclip = "Noclip",
+        AntiAFK = "Anti-AFK", FlyMode = "[PREMIUM] Fly Mode",
+        FlySpeed = "[PREMIUM] Fly Speed (1-300)", GodMode = "[PREMIUM] God Mode / Ghost",
+        Gravity = "[PREMIUM] Custom Gravity",
+    }
+}
+
+-- Hàm hỗ trợ gắn GUI an toàn
+local function ProtectAndParent(gui)
+    gui.ResetOnSpawn = false
+    gui.DisplayOrder = 999999
+    if gethui then
+        gui.Parent = gethui()
+    elseif syn and syn.protect_gui then
+        syn.protect_gui(gui)
+        gui.Parent = CoreGui
+    else
+        gui.Parent = CoreGui
+    end
+end
+
+-- -------------------------------------------------------------
+-- KEY SYSTEM GUI (HỆ THỐNG XÁC THỰC KEY)
+-- -------------------------------------------------------------
+local KeyGui = Instance.new("ScreenGui")
+KeyGui.Name = "MemeDashKeyGui"
+ProtectAndParent(KeyGui)
+
+local KeyFrame = Instance.new("Frame", KeyGui)
+KeyFrame.Size = UDim2.new(0, 360, 0, 200)
+KeyFrame.Position = UDim2.new(0.5, -180, 0.5, -100)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+KeyFrame.Active = true
+KeyFrame.Draggable = true
+Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 12)
+local KeyStroke = Instance.new("UIStroke", KeyFrame)
+KeyStroke.Color = Color3.fromRGB(0, 229, 255)
+KeyStroke.Thickness = 2
+
+local KeyTitle = Instance.new("TextLabel", KeyFrame)
+KeyTitle.Size = UDim2.new(1, 0, 0, 40)
+KeyTitle.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+KeyTitle.Text = "🔑 MEME DASH PREMIUM KEY"
+KeyTitle.TextColor3 = Color3.fromRGB(0, 229, 255)
+KeyTitle.TextSize = 13
+KeyTitle.Font = Enum.Font.GothamBold
+Instance.new("UICorner", KeyTitle).CornerRadius = UDim.new(0, 12)
+
+local KeyInput = Instance.new("TextBox", KeyFrame)
+KeyInput.Size = UDim2.new(0, 280, 0, 38)
+KeyInput.Position = UDim2.new(0.5, -140, 0.4, -15)
+KeyInput.BackgroundColor3 = Color3.fromRGB(25, 25, 38)
+KeyInput.PlaceholderText = "Nhập Key Premium..."
+KeyInput.Text = ""
+KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInput.TextSize = 12
+KeyInput.Font = Enum.Font.GothamMedium
+Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 8)
+
+local SubmitBtn = Instance.new("TextButton", KeyFrame)
+SubmitBtn.Size = UDim2.new(0, 130, 0, 32)
+SubmitBtn.Position = UDim2.new(0.5, -65, 0.75, -5)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(0, 229, 255)
+SubmitBtn.Text = "XÁC NHẬN"
+SubmitBtn.TextColor3 = Color3.fromRGB(15, 15, 22)
+SubmitBtn.TextSize = 12
+SubmitBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 8)
+
+local StatusText = Instance.new("TextLabel", KeyFrame)
+StatusText.Size = UDim2.new(1, 0, 0, 20)
+StatusText.Position = UDim2.new(0, 0, 0.58, 0)
+StatusText.BackgroundTransparency = 1
+StatusText.Text = ""
+StatusText.TextColor3 = Color3.fromRGB(255, 71, 87)
+StatusText.TextSize = 11
+StatusText.Font = Enum.Font.GothamMedium
+
+-- -------------------------------------------------------------
+-- KHỞI TẠO MENU CHÍNH
+-- -------------------------------------------------------------
+local function InitializePremiumHub()
+    KeyGui:Destroy()
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "MemeDashPremiumGui"
+    ProtectAndParent(ScreenGui)
+
+    local ToggleBtn = Instance.new("ImageButton", ScreenGui)
+    ToggleBtn.Size = UDim2.new(0, 42, 0, 42)
+    ToggleBtn.Position = UDim2.new(0, 15, 0, 70)
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+    ToggleBtn.Image = "rbxassetid://130290793830130"
+    ToggleBtn.Draggable = true
+    ToggleBtn.Active = true
+    Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
+    local Stroke = Instance.new("UIStroke", ToggleBtn)
+    Stroke.Color = Color3.fromRGB(0, 229, 255)
+    Stroke.Thickness = 2
+
+    local MainFrame = Instance.new("Frame", ScreenGui)
+    MainFrame.Size = UDim2.new(0, 420, 0, 420)
+    MainFrame.Position = UDim2.new(0.5, -210, 0.5, -210)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+    local MainStroke = Instance.new("UIStroke", MainFrame)
+    MainStroke.Color = Color3.fromRGB(108, 92, 231)
+
+    local visible = true
+    ToggleBtn.MouseButton1Click:Connect(function() 
+        visible = not visible 
+        MainFrame.Visible = visible 
+    end)
+
+    local Title = Instance.new("TextLabel", MainFrame)
+    Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+    Title.Text = "  👑 Meme Dash Premium @mangnhatoi"
+    Title.TextColor3 = Color3.fromRGB(0, 229, 255)
+    Title.TextSize = 13
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 12)
+
+    local CloseBtn = Instance.new("TextButton", Title)
+    CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+    CloseBtn.Position = UDim2.new(1, -32, 0.5, -13)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 71, 87)
+    CloseBtn.Text = "✕"
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseBtn.TextSize, CloseBtn.Font = 12, Enum.Font.GothamBold
+    Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+    CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+    local LangBtn = Instance.new("TextButton", Title)
+    LangBtn.Size = UDim2.new(0, 60, 0, 26)
+    LangBtn.Position = UDim2.new(1, -100, 0.5, -13)
+    LangBtn.BackgroundColor3 = Color3.fromRGB(0, 229, 255)
+    LangBtn.Text = "VI / EN"
+    LangBtn.TextColor3 = Color3.fromRGB(15, 15, 22)
+    LangBtn.TextSize, LangBtn.Font = 11, Enum.Font.GothamBold
+    Instance.new("UICorner", LangBtn).CornerRadius = UDim.new(0, 6)
+
+    local Container = Instance.new("ScrollingFrame", MainFrame)
+    Container.Size = UDim2.new(1, -16, 1, -55)
+    Container.Position = UDim2.new(0, 8, 0, 48)
+    Container.BackgroundTransparency = 1
+    Container.CanvasSize = UDim2.new(0, 0, 0, 650)
+    Container.ScrollBarThickness = 3
+
+    local Layout = Instance.new("UIListLayout", Container)
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Padding = UDim.new(0, 6)
+
+    local UIReferences = {}
+
+    local function AddToggle(key, default, callback)
+        local F = Instance.new("Frame", Container)
+        F.Size = UDim2.new(1, 0, 0, 38)
+        F.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+        Instance.new("UICorner", F).CornerRadius = UDim.new(0, 8)
+
+        local L = Instance.new("TextLabel", F)
+        L.Size = UDim2.new(0.7, 0, 1, 0)
+        L.Position = UDim2.new(0, 10, 0, 0)
+        L.BackgroundTransparency = 1
+        L.Text = Locales[CurrentLang][key] or key
+        L.TextColor3 = Color3.fromRGB(240, 240, 250)
+        L.TextSize = 12
+        L.Font = Enum.Font.GothamMedium
+        L.TextXAlignment = Enum.TextXAlignment.Left
+        table.insert(UIReferences, {Type = "Text", Label = L, Key = key})
+
+        local B = Instance.new("TextButton", F)
+        B.Size = UDim2.new(0, 40, 0, 20)
+        B.Position = UDim2.new(1, -48, 0.5, -10)
+        B.BackgroundColor3 = default and Color3.fromRGB(0, 229, 255) or Color3.fromRGB(45, 45, 65)
+        B.Text = ""
+        Instance.new("UICorner", B).CornerRadius = UDim.new(1, 0)
+
+        local C = Instance.new("Frame", B)
+        C.Size = UDim2.new(0, 16, 0, 16)
+        C.Position = default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        C.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Instance.new("UICorner", C).CornerRadius = UDim.new(1, 0)
+
+        local state = default
+        B.MouseButton1Click:Connect(function()
+            state = not state
+            C:TweenPosition(state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+            B.BackgroundColor3 = state and Color3.fromRGB(0, 229, 255) or Color3.fromRGB(45, 45, 65)
+            callback(state)
+        end)
+    end
+
+    local function AddNumberInput(key, defaultVal, minVal, maxVal, callback)
+        local F = Instance.new("Frame", Container)
+        F.Size = UDim2.new(1, 0, 0, 38)
+        F.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+        Instance.new("UICorner", F).CornerRadius = UDim.new(0, 8)
+
+        local L = Instance.new("TextLabel", F)
+        L.Size = UDim2.new(0.55, 0, 1, 0)
+        L.Position = UDim2.new(0, 10, 0, 0)
+        L.BackgroundTransparency = 1
+        L.Text = Locales[CurrentLang][key] or key
+        L.TextColor3 = Color3.fromRGB(240, 240, 250)
+        L.TextSize = 12
+        L.Font = Enum.Font.GothamMedium
+        L.TextXAlignment = Enum.TextXAlignment.Left
+        table.insert(UIReferences, {Type = "Text", Label = L, Key = key})
+
+        local TB = Instance.new("TextBox", F)
+        TB.Size = UDim2.new(0, 85, 0, 24)
+        TB.Position = UDim2.new(1, -95, 0.5, -12)
+        TB.BackgroundColor3 = Color3.fromRGB(32, 32, 45)
+        TB.Text = tostring(defaultVal)
+        TB.TextColor3 = Color3.fromRGB(0, 229, 255)
+        TB.TextSize, TB.Font = 12, Enum.Font.GothamBold
+        Instance.new("UICorner", TB).CornerRadius = UDim.new(0, 6)
+
+        TB.FocusLost:Connect(function()
+            local v = tonumber(TB.Text)
+            if v then v = math.clamp(v, minVal, maxVal) TB.Text = tostring(v) callback(v) else TB.Text = tostring(defaultVal) end
+        end)
+    end
+
+    LangBtn.MouseButton1Click:Connect(function()
+        CurrentLang = CurrentLang == "VI" and "EN" or "VI"
+        for _, item in ipairs(UIReferences) do
+            if item.Type == "Text" then item.Label.Text = Locales[CurrentLang][item.Key] or item.Key end
+        end
+    end)
+
+    -- Container bàn phím ảo
+    local PCVirtualContainer = Instance.new("ScreenGui")
+    PCVirtualContainer.Name = "PCVirtualContainer"
+    ProtectAndParent(PCVirtualContainer)
+    PCVirtualContainer.Enabled = false
+
+    local WASDFrame = Instance.new("Frame", PCVirtualContainer)
+    WASDFrame.Size = UDim2.new(0, 130, 0, 90)
+    WASDFrame.Position = UDim2.new(0, 15, 1, -115)
+    WASDFrame.BackgroundTransparency = 1
+
+    local function CreateWASDButton(name, size, pos, text)
+        local btn = Instance.new("TextButton", WASDFrame)
+        btn.Size = size
+        btn.Position = pos
+        btn.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+        btn.BackgroundTransparency = 0.4
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Text = text
+        btn.TextSize, btn.Font = 14, Enum.Font.GothamBold
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+        local stroke = Instance.new("UIStroke", btn)
+        stroke.Color = Color3.fromRGB(0, 229, 255)
+        stroke.Thickness = 1.2
+        return btn
+    end
+
+    local btnW = CreateWASDButton("W", UDim2.new(0, 38, 0, 38), UDim2.new(0.5, -19, 0, 0), "W")
+    local btnA = CreateWASDButton("A", UDim2.new(0, 38, 0, 38), UDim2.new(0, 0, 0, 44), "A")
+    local btnS = CreateWASDButton("S", UDim2.new(0, 38, 0, 38), UDim2.new(0.5, -19, 0, 44), "S")
+    local btnD = CreateWASDButton("D", UDim2.new(0, 38, 0, 38), UDim2.new(1, -38, 0, 44), "D")
+
+    btnW.MouseButton1Down:Connect(function() pcState.W = true end)
+    btnW.MouseButton1Up:Connect(function() pcState.W = false end)
+    btnA.MouseButton1Down:Connect(function() pcState.A = true end)
+    btnA.MouseButton1Up:Connect(function() pcState.A = false end)
+    btnS.MouseButton1Down:Connect(function() pcState.S = true end)
+    btnS.MouseButton1Up:Connect(function() pcState.S = false end)
+    btnD.MouseButton1Down:Connect(function() pcState.D = true end)
+    btnD.MouseButton1Up:Connect(function() pcState.D = false end)
+
+    local SpaceFrame = Instance.new("Frame", PCVirtualContainer)
+    SpaceFrame.Size = UDim2.new(0, 130, 0, 50)
+    SpaceFrame.Position = UDim2.new(1, -145, 1, -75)
+    SpaceFrame.BackgroundTransparency = 1
+
+    local btnSpace = Instance.new("TextButton", SpaceFrame)
+    btnSpace.Size = UDim2.new(1, 0, 1, 0)
+    btnSpace.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+    btnSpace.BackgroundTransparency = 0.4
+    btnSpace.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btnSpace.Text = "SPACE"
+    btnSpace.TextSize, btnSpace.Font = 14, Enum.Font.GothamBold
+    Instance.new("UICorner", btnSpace).CornerRadius = UDim.new(0, 6)
+    local spaceStroke = Instance.new("UIStroke", btnSpace)
+    spaceStroke.Color = Color3.fromRGB(0, 229, 255)
+
+    btnSpace.MouseButton1Down:Connect(function() pcState.Space = true end)
+    btnSpace.MouseButton1Up:Connect(function() pcState.Space = false end)
+
+    -- Thêm các Toggle & Slider
+    AddToggle("SpeedHack", false, function(s) getgenv().MemeDashConfig.SpeedHack = s end)
+    AddNumberInput("Speed", 16, 1, 676767, function(v) getgenv().MemeDashConfig.WalkSpeed = v end)
+    AddToggle("FlyMode", false, function(s) getgenv().MemeDashConfig.FlyMode = s end)
+    AddNumberInput("FlySpeed", 50, 1, 300, function(v) getgenv().MemeDashConfig.FlySpeed = v end)
+    AddToggle("GodMode", false, function(s)
+        getgenv().MemeDashConfig.GodMode = s
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.Transparency = s and 0.6 or 0 end
+            end
+        end
+    end)
+    AddNumberInput("Gravity", 196, 0, 196, function(v) getgenv().MemeDashConfig.CustomGravity = v workspace.Gravity = v end)
+    AddToggle("VirtualPC", false, function(s)
+        getgenv().MemeDashConfig.VirtualPC = s
+        PCVirtualContainer.Enabled = s
+    end)
+    AddToggle("WallFling", false, function(s) getgenv().MemeDashConfig.WallFling = s end)
+    AddToggle("AutoJump", false, function(s) getgenv().MemeDashConfig.AutoJump = s end)
+    AddToggle("AutoFarm", false, function(s)
+        getgenv().MemeDashConfig.AutoFarmLevel = s
+        AirPosition = s and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 60, 0) or nil
+    end)
+    AddToggle("RemoveWalls", false, function(s) getgenv().MemeDashConfig.RemoveWalls = s end)
+    AddToggle("Noclip", false, function(s) getgenv().MemeDashConfig.Noclip = s end)
+    AddToggle("AntiAFK", true, function(s) getgenv().MemeDashConfig.AntiAFK = s end)
+end
+
+-- Kiểm tra Key (Hỗ trợ mở khóa ngay khi nhập bất kỳ chữ cái hay Key nào)
+SubmitBtn.MouseButton1Click:Connect(function()
+    local input = string.gsub(KeyInput.Text, "%s+", "")
+    if #input > 0 then
+        StatusText.TextColor3 = Color3.fromRGB(46, 213, 115)
+        StatusText.Text = "XÁC THỰC THÀNH CÔNG!"
+        task.wait(0.3)
+        InitializePremiumHub()
+    else
+        StatusText.TextColor3 = Color3.fromRGB(255, 71, 87)
+        StatusText.Text = "VUI LÒNG NHẬP KEY!"
+    end
+end)
+
+-- Vòng lặp RenderStepped
+RunService.RenderStepped:Connect(function()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+
+    if hum and root then
+        if getgenv().MemeDashConfig.SpeedHack then hum.WalkSpeed = getgenv().MemeDashConfig.WalkSpeed end
+        
+        if getgenv().MemeDashConfig.FlyMode then
+            local cam = workspace.CurrentCamera
+            local moveVec = Vector3.new()
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) or pcState.W then moveVec = moveVec + cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) or pcState.S then moveVec = moveVec - cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) or pcState.A then moveVec = moveVec - cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) or pcState.D then moveVec = moveVec + cam.CFrame.RightVector end
+            root.AssemblyLinearVelocity = moveVec * getgenv().MemeDashConfig.FlySpeed
+        end
+
+        if getgenv().MemeDashConfig.VirtualPC and not getgenv().MemeDashConfig.FlyMode then
+            local moveDir = Vector3.new(0, 0, 0)
+            if pcState.W then moveDir = moveDir + Vector3.new(0, 0, -1) end
+            if pcState.S then moveDir = moveDir + Vector3.new(0, 0, 1) end
+            if pcState.A then moveDir = moveDir + Vector3.new(-1, 0, 0) end
+            if pcState.D then moveDir = moveDir + Vector3.new(1, 0, 0) end
+            
+            if moveDir.Magnitude > 0 then hum:Move(moveDir.Unit, true) end
+            if pcState.Space and hum.FloorMaterial ~= Enum.Material.Air then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        end
+
+        if getgenv().MemeDashConfig.WallFling then
+            pcall(function()
+                for _, p in pairs(root:GetTouchingParts()) do
+                    if not p:IsDescendantOf(char) and p.CanCollide then
+                        root.AssemblyLinearVelocity = root.CFrame.LookVector * 150 + Vector3.new(0, 50, 0)
+                    end
+                end
+            end)
+        end
+
+        if getgenv().MemeDashConfig.AutoJump and hum.FloorMaterial ~= Enum.Material.Air and not getgenv().MemeDashConfig.AutoFarmLevel then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+
+        if getgenv().MemeDashConfig.AutoFarmLevel then
+            if not AirPosition then AirPosition = root.Position + Vector3.new(0, 60, 0) end
+            root.CFrame = CFrame.new(AirPosition)
+            root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        end
+    end
+
+    if getgenv().MemeDashConfig.RemoveWalls then
+        pcall(function()
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.Transparency >= 0.99 and obj.CanCollide then obj.CanCollide = false end
+            end
+        end)
+    end
+
+    if getgenv().MemeDashConfig.Noclip then
+        for _, p in pairs(char:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end
+    end
+end)
+
+-- Anti-AFK
+task.spawn(function()
+    while task.wait(50) do
+        if getgenv().MemeDashConfig.AntiAFK then
+            pcall(function()
+                game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+      
